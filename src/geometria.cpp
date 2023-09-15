@@ -134,6 +134,27 @@ public:
         }
     }
 
+    std::vector<int> syncMeteors() {
+        std::vector<int> toRemove;
+        for (std::size_t i = 0; i < meteors.size(); ++i) {  
+            if (meteors[i]->getY() > 400) {
+                toRemove.push_back(static_cast<int>(i)); 
+            }
+        }
+        return toRemove;
+    }
+
+    std::vector<int> syncProjectiles() {
+        std::vector<int> toRemove;
+        for (std::size_t i = 0; i < projectiles.size(); ++i) {
+            if (projectiles[i]->getY() < 0) {
+                toRemove.push_back(static_cast<int>(i)); 
+            }
+        }
+        return toRemove;
+    }
+
+    
 private:
     std::vector<std::unique_ptr<Meteor>> meteors;
     std::vector<std::unique_ptr<Projectile>> projectiles;
@@ -173,5 +194,7 @@ PYBIND11_MODULE(geometria, m) {
         .def("getMeteorCount", &Game::getMeteorCount)
         .def("getMeteor", &Game::getMeteor)
         .def("getProjectileCount", &Game::getProjectileCount)
-        .def("getProjectile", &Game::getProjectile);
+        .def("getProjectile", &Game::getProjectile)
+        .def("syncMeteors", &Game::syncMeteors)
+        .def("syncProjectiles", &Game::syncProjectiles);
 }

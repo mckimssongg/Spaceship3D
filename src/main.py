@@ -16,7 +16,7 @@ def move_spaceship(event):
 def update_meteors():
     global meteor_shapes
     game.moveMeteors(0, 10, 0)
-
+    
     if random.random() < 0.5:
         x = random.randint(0, 400)
         y = 0
@@ -26,16 +26,11 @@ def update_meteors():
         new_shape = draw_meteor(x, y, size)
         meteor_shapes.append(new_shape)
 
-    for i in reversed(range(game.getMeteorCount())):
-        meteor = game.getMeteor(i)
-        x, y = meteor.getX(), meteor.getY()
-        update_meteor_shape(meteor_shapes[i], x, y, 10)
-
-        collision_distance = 15.0
-        if spaceship.collidesWithMeteor(meteor, collision_distance):
-            canvas.delete(meteor_shapes[i])
-            game.destroyMeteor(i)
-            del meteor_shapes[i]
+    to_remove = game.syncMeteors()
+    for index in reversed(to_remove):
+        canvas.delete(meteor_shapes[index])
+        game.destroyMeteor(index)
+        del meteor_shapes[index]
 
     root.after(500, update_meteors)
 
@@ -43,11 +38,6 @@ def draw_meteor(x, y, size):
     points = [(round(x + size * math.cos(math.radians(angle))), round(y + size * math.sin(math.radians(angle)))) for angle in range(0, 360, 60)]
     flat_points = [coord for point in points for coord in point]
     return canvas.create_polygon(*flat_points, outline="red", fill="red")
-
-def update_meteor_shape(shape, x, y, size):
-    points = [(round(x + size * math.cos(math.radians(angle))), round(y + size * math.sin(math.radians(angle)))) for angle in range(0, 360, 60)]
-    flat_points = [coord for point in points for coord in point]
-    canvas.coords(shape, *flat_points)
 
 def fire_projectile(event):
     x, y = spaceship.getX(), spaceship.getY()
@@ -57,24 +47,19 @@ def fire_projectile(event):
     game.addProjectile(x, y)
 
 def update_projectiles():
-    global projectiles_shapes
+    global projectiles_shapes, meteor_shapes
 
     game.moveProjectiles(0, -10)
-    new_projectiles_shapes = []
-
     if game.projectileCollidesWithMeteor(15.0):
-        # Asumiendo que el método 'projectileCollidesWithMeteor' elimina proyectiles y meteoros colisionados
-        # debemos actualizar la lista de shapes para reflejar estos cambios.
-        # Aquí deberías implementar la lógica para eliminar las shapes de los proyectiles y meteoros colisionados.
-        pass
+        projectiles_shapes = []
+        meteor_shapes = []
 
-    for i in range(game.getProjectileCount()):
-        projectile = game.getProjectile(i)
-        x, y = projectile.getX(), projectile.getY()
-        canvas.coords(projectiles_shapes[i], x - 5, y - 5, x + 5, y + 5)
+    to_remove = game.syncProjectiles()
+    for index in reversed(to_remove):
+        canvas.delete(projectiles_shapes[index])
+        del projectiles_shapes[index]
 
     root.after(100, update_projectiles)
-
 
 spaceship = geometria.Spaceship(200.0, 200.0, 0.0)
 root = tk.Tk()
