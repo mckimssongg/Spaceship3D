@@ -70,16 +70,3 @@ sudo pacman -S tk
 ```bash
  python main.py
 ```
-
-### Problemas Comunes
-
-1. **No se encuentra Python.h:** Asegúrese de tener instaladas las bibliotecas de desarrollo de Python. En Arch Linux, use:
-
-```bash
-sudo pacman -S python-dev
-```
-
-2. **No se encuentra geometria.cpp:** Asegúrese de estar en el directorio correcto cuando ejecute compile_geometria.py.
-3. **Error de biblioteca OpenGL:** Asegúrese de tener instalados los drivers de OpenGL.
-
-### Futuras Mejoras
