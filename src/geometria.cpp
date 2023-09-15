@@ -47,6 +47,22 @@ private:
     float x, y, z;
 };
 
+class Projectile {
+public:
+    Projectile(float x, float y) : x(x), y(y) {}
+
+    void move(float dx, float dy) {
+        x += dx;
+        y += dy;
+    }
+
+    float getX() const { return x; }
+    float getY() const { return y; }
+
+private:
+    float x, y;
+};
+
 namespace py = pybind11;
 
 class Game {
@@ -69,16 +85,30 @@ public:
         }
     }
 
-    bool spaceshipCollidesWithMeteor(const Spaceship &spaceship, float collisionDistance) {
-        for (int i = meteors.size() - 1; i >= 0; i--) {
-            if (spaceship.collidesWithMeteor(*meteors[i], collisionDistance)) {
-                destroyMeteor(i);
-                return true;
+    void addProjectile(float x, float y) {
+        projectiles.push_back(std::unique_ptr<Projectile>(new Projectile(x, y)));
+    }
+
+    void moveProjectiles(float dx, float dy) {
+        for (auto &projectile : projectiles) {
+            projectile->move(dx, dy);
+        }
+    }
+
+    bool projectileCollidesWithMeteor(float collisionDistance) {
+        for (int i = meteors.size() - 1; i >= 0; --i) {
+            for (int j = projectiles.size() - 1; j >= 0; --j) {
+                float dx = std::abs(projectiles[j]->getX() - meteors[i]->getX());
+                float dy = std::abs(projectiles[j]->getY() - meteors[i]->getY());
+                if (dx < collisionDistance + meteors[i]->getSize() / 2 && dy < collisionDistance + meteors[i]->getSize() / 2) {
+                    meteors.erase(meteors.begin() + i);
+                    projectiles.erase(projectiles.begin() + j);
+                    return true;
+                }
             }
         }
         return false;
     }
-    
 
     int getMeteorCount() const {
         return static_cast<int>(meteors.size());
@@ -92,8 +122,21 @@ public:
         }
     }
 
+    int getProjectileCount() const {
+        return static_cast<int>(projectiles.size());
+    }
+
+    const Projectile& getProjectile(std::size_t index) const {
+        if (index < projectiles.size()) {
+            return *projectiles[index];
+        } else {
+            throw std::out_of_range("Invalid index");
+        }
+    }
+
 private:
     std::vector<std::unique_ptr<Meteor>> meteors;
+    std::vector<std::unique_ptr<Projectile>> projectiles;
 };
 
 PYBIND11_MODULE(geometria, m) {
@@ -113,12 +156,22 @@ PYBIND11_MODULE(geometria, m) {
         .def("getZ", &Meteor::getZ)
         .def("getSize", &Meteor::getSize);
 
+    py::class_<Projectile>(m, "Projectile")
+        .def(py::init<float, float>())
+        .def("move", &Projectile::move)
+        .def("getX", &Projectile::getX)
+        .def("getY", &Projectile::getY);
+
     py::class_<Game>(m, "Game")
         .def(py::init<>())
         .def("addMeteor", &Game::addMeteor)
         .def("moveMeteors", &Game::moveMeteors)
         .def("destroyMeteor", &Game::destroyMeteor)
-        .def("spaceshipCollidesWithMeteor", &Game::spaceshipCollidesWithMeteor)
+        .def("addProjectile", &Game::addProjectile)
+        .def("moveProjectiles", &Game::moveProjectiles)
+        .def("projectileCollidesWithMeteor", &Game::projectileCollidesWithMeteor)
         .def("getMeteorCount", &Game::getMeteorCount)
-        .def("getMeteor", &Game::getMeteor);
+        .def("getMeteor", &Game::getMeteor)
+        .def("getProjectileCount", &Game::getProjectileCount)
+        .def("getProjectile", &Game::getProjectile);
 }
