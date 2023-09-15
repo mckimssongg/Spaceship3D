@@ -1,0 +1,6 @@
+# Compilados de C++ 
+*.slo
+*.lo
+*.o
+*.obj
+*.so
